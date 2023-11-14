@@ -18,4 +18,28 @@ def list_couleur(px,w,h):
     return lst
             
 
-print(list_couleur(px,w,h))
+
+def palette_k(dict , k) :
+    pal = []
+    for i in range (k) :
+        max = 0
+        key_max = 0
+        for key in dict :
+            if dict[key] > max :
+                max = dict[key]
+                key_max = key
+        dict[key_max] = -1
+        pal.append(max)
+    return pal
+
+
+
+
+
+
+
+
+
+
+
+
