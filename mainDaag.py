@@ -29,12 +29,19 @@ def palette_k(dict , k) :
                 max = dict[key]
                 key_max = key
         dict[key_max] = -1
-        pal.append(max)
+        pal.append(key_max)
     return pal
 
+print(palette_k(list_couleur(px,w,h),4))
 
+from IPython.display import display, HTML
 
+def draw_rectangle(rgb_color,w,h):
+    color = f'rgb({rgb_color[0]}, {rgb_color[1]}, {rgb_color[2]})'
+    html = f'<svg width="{w}" height="{h}"><rect width="100" height="100" fill="{color}" /></svg>'
 
+    display(HTML(html))
+# utilisation : draw_rectangle((69, 119, 170)) 
 
 
 
