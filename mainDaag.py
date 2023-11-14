@@ -18,4 +18,4 @@ def list_couleur(px,w,h):
     return lst
             
 
-list_couleur(px,w,h)
+print(list_couleur(px,w,h))
