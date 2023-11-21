@@ -6,8 +6,12 @@ import numpy as np
 
 
 im = Image.open("TD5/IMG_3135.png")
+#im = Image.open("TD5/IMG_1964.png")
 im = im.convert("RGB")
 px = im.load()
+
+im2 = Image.new('RGB', (im.width, im.height)) 
+px2 = im2.load()
 
 w,h = im.size
 
@@ -40,12 +44,12 @@ def palette_k(dict , k) :
         pal.append(key_max)
     return pal
 
-pal = palette_k(list_couleur(px,w,h),30)
+pal = palette_k(list_couleur(px,w,h),200)
 
 def plot_color_palette(rgb_values):
 
     rgb_values = np.array(rgb_values) / 255.0
-    
+
     custom_cmap = ListedColormap(rgb_values)
 
     data = np.arange(len(rgb_values)).reshape(1, -1)
@@ -62,7 +66,29 @@ def plot_color_palette(rgb_values):
 
 plot_color_palette(pal)
 
+def dist_color(c1,c2):
+    return(((c1[0]-c2[0])**2+(c1[1]-c2[1])**2+(c1[2]-c2[2])**2)**(1/2))
 
+def recolorier(pal,px,px2,w,h):
+    erreur = 0
+    for x in range(w):
+        for y in range(h):
+            color = px[x,y]
+            dist = dist_color(pal[0],color)
+            col_plus_proche = pal[0]
+            for i in range(1,len(pal)):
+                dist_col = dist_color(pal[i],color)
+                if dist > dist_col:
+                    dist = dist_col
+                    col_plus_proche = pal[i]
+            px2[x,y] = col_plus_proche
+            erreur += dist
+    print(erreur/(w*h))
 
-
+recolorier(pal,px,px2,w,h)
+im2.show()
+im.show()
+    
+                     
+             
 
