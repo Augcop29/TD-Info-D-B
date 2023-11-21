@@ -1,4 +1,5 @@
 from PIL import Image
+import math
 from IPython.display import display,HTML
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
@@ -46,6 +47,34 @@ def palette_k(dict , k) :
 
 pal = palette_k(list_couleur(px,w,h),200)
 
+
+
+def euclidean_distance(color1, color2):
+    return math.sqrt(sum((c1 - c2)**2 for c1, c2 in zip(color1, color2)))
+
+def sort_colors_by_distance(color_dict):
+    filtered_colors = {color: freq for color, freq in color_dict.items() if freq >= 5}
+    colors = list(filtered_colors.keys())
+    sorted_colors = sorted(colors, key=lambda c: filtered_colors[c])
+
+    # Triez les couleurs en fonction de leur distance euclidienne
+    sorted_colors = sorted(sorted_colors, key=lambda c1: min(euclidean_distance(c1, c2) for c2 in sorted_colors))
+
+    return sorted_colors
+
+# Exemple d'utilisation :
+couleurs = {
+    (255, 0, 0): 10,
+    (0, 255, 0): 5,
+    (0, 0, 255): 8,
+    (128, 128, 0): 3,
+    # Ajoutez d'autres couleurs au besoin
+}
+
+couleurs_triees = sort_colors_by_distance(list_couleur(px,w,h))
+print(couleurs_triees)
+
+
 def plot_color_palette(rgb_values):
 
     rgb_values = np.array(rgb_values) / 255.0
@@ -64,7 +93,31 @@ def plot_color_palette(rgb_values):
 
     plt.show(block=True)
 
-plot_color_palette(pal)
+def split_colors_into_segments(sorted_colors, k):
+    n = len(sorted_colors)
+    segment_size = n // k
+
+    color_segments = [sorted_colors[i:i+segment_size] for i in range(0, n, segment_size)]
+
+    # Si le nombre de couleurs n'est pas divisible par k, ajouter les couleurs restantes au dernier segment
+    if n % k != 0:
+        color_segments[-1].extend(sorted_colors[-(n % k):])
+
+    pal = []
+    for segment in color_segments:
+        avg_color = np.mean(segment, axis=0)
+        # Convertir les valeurs de couleur moyenne en entiers
+        avg_color = tuple(int(val) for val in avg_color)
+        pal.append(avg_color)
+
+    return pal
+
+
+def palette_2(dict,k):
+    return(split_colors_into_segments(sort_colors_by_distance(dict),k))
+pal2 = palette_2(list_couleur(px,w,h),30)
+
+plot_color_palette(pal2)
 
 def dist_color(c1,c2):
     return(((c1[0]-c2[0])**2+(c1[1]-c2[1])**2+(c1[2]-c2[2])**2)**(1/2))
@@ -81,11 +134,11 @@ def recolorier(pal,px,px2,w,h):
                 if dist > dist_col:
                     dist = dist_col
                     col_plus_proche = pal[i]
-            px2[x,y] = col_plus_proche
+            px2[x,y] = (col_plus_proche[0],col_plus_proche[1],col_plus_proche[2])
             erreur += dist
     print(erreur/(w*h))
 
-recolorier(pal,px,px2,w,h)
+recolorier(pal2,px,px2,w,h)
 im2.show()
 im.show()
     
