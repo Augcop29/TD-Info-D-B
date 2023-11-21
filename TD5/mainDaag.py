@@ -1,7 +1,11 @@
 from PIL import Image
 from IPython.display import display,HTML
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+import numpy as np
 
-im = Image.open("IMG_3135.png")
+
+im = Image.open("TD5/IMG_3135.png")
 im = im.convert("RGB")
 px = im.load()
 
@@ -36,16 +40,24 @@ def palette_k(dict , k) :
         pal.append(key_max)
     return pal
 
-print(palette_k(list_couleur(px,w,h),4))
+pal = palette_k(list_couleur(px,w,h),30)
 
+def plot_color_palette(rgb_values):
+    custom_cmap = ListedColormap(rgb_values)
 
+    data = np.arange(len(rgb_values)).reshape(1, -1)
 
+    fig, ax = plt.subplots(figsize=(len(rgb_values), 1))
 
+    cax = ax.pcolormesh(data, cmap=custom_cmap, edgecolors='w', linewidth=0.5)
 
+    ax.set_yticks([])
+    ax.set_xticks(np.arange(0.5, len(rgb_values), 1))
+    ax.set_xticklabels([])
 
+    plt.show(block=True)
 
-
-
+plot_color_palette(pal)
 
 
 
