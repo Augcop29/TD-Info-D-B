@@ -43,6 +43,9 @@ def palette_k(dict , k) :
 pal = palette_k(list_couleur(px,w,h),30)
 
 def plot_color_palette(rgb_values):
+
+    rgb_values = np.array(rgb_values) / 255.0
+    
     custom_cmap = ListedColormap(rgb_values)
 
     data = np.arange(len(rgb_values)).reshape(1, -1)
