@@ -6,9 +6,7 @@ import numpy as np
 import random
 from copy import deepcopy
 
-from colormath.color_objects import sRGBColor, LabColor
-from colormath.color_conversions import convert_color
-from colormath.color_diff import delta_e_cie2000
+from skimage.color import rgb2lab, deltaE_ciede2000
 
 #im = Image.open("TD5/figures/color-rainbow.png")
 #im = Image.open("TD5/IMG_0741.jpg")
@@ -62,9 +60,8 @@ def Kmeans(colors , k):
     variation = True
 
     while variation:
-        centroids2 = np.empty(k , dtype = list)
-        cluster = np.array([[] for _ in range(k)] , dtype = list)
-
+        centroids2 = []
+        cluster = [[] for _ in range(k)]
 #On compare la distance de la couleur "key" a chaque centroid
         for key in keys :
 
@@ -76,18 +73,31 @@ def Kmeans(colors , k):
                     i_min = i           
             cluster[i_min].append(key)
 
-#Calcul de la moyenne de la couleur de chaque groupe (a la main)
+#Calcul de la moyenne de la couleur de chaque groupe
+        '''
+        for i in range (k):
+            n_i = len(cluster[i])
+           
+            r_moy = sum(cluster[i][:][0])//n_i
+            v_moy = sum(cluster[i][:][1])//n_i
+            b_moy = sum(cluster[i][:][2])//n_i
+            centroids2.append((r_moy , v_moy , b_moy))
+        '''
+#Calcul de la moyenne de la couleur de chaque groupe (à la main)
 
         for i in range (k):
             n_i = len(cluster[i])
-            S = np.zeros(1,3)
+            S_r = 0
+            S_v = 0
+            S_b = 0
             for j in range (n_i):
-                S[0] += cluster[i][j][0]
-                S[1] += cluster[i][j][1]
-                S[2] += cluster[i][j][2]
-            moy  = np.zeros(1,3)
-            moy = moy//n_i
-            centroids2[i] = [(moy[0] , moy[1] , moy[2])]
+                S_r += cluster[i][j][0]
+                S_v += cluster[i][j][1]
+                S_b += cluster[i][j][2]
+            moy_r = S_r//n_i
+            moy_v = S_v//n_i
+            moy_b = S_b//n_i
+            centroids2.append((moy_r , moy_v , moy_b))
 
         
 #Si les nouveaux centroides sont egaux aux anciens, alors il n'y a plus de variation
@@ -332,19 +342,18 @@ recolored_image_sans_g.show()'''
 
 #Conversion rgb vers lab :
 def rgb_to_lab_color(r, g, b):
-   
-    rgb = sRGBColor(r, g, b, is_upscaled=True)
-    lab = convert_color(rgb, LabColor)
+    # Convertir de RGB à Lab Color
+    rgb = np.array([[[r / 255, g / 255, b / 255]]])
+    lab = rgb2lab(rgb)[0][0]
     return lab
 
-#Calcul de distance avec la distance CIEDE2000 (sensé mieux representer les differences percuent par l'oeil humain)
 def color_distance_ciede2000(color1_rgb, color2_rgb):
-    # Convertir les couleurs RGB en objets LabColor
+    # Convertir les couleurs RGB en Lab
     color1_lab = rgb_to_lab_color(*color1_rgb)
     color2_lab = rgb_to_lab_color(*color2_rgb)
 
     # Calculer la distance CIEDE2000
-    delta_e = delta_e_cie2000(color1_lab, color2_lab)
+    delta_e = deltaE_ciede2000(color1_lab, color2_lab)
     return delta_e
 
 def Kmeans_lab(colors , k):
@@ -392,9 +401,7 @@ def Kmeans_lab(colors , k):
     
     return centroids
 
-def recolorier_image_km_lab(im , k) :
-
-    erreur = 0
+def recolorier_image_km_ciede2000(im , k) :
     px = im.load()
     im_2 = im.copy()
     px_2 = im_2.load()
@@ -403,52 +410,25 @@ def recolorier_image_km_lab(im , k) :
     for i in range (w) :
         for j in range (h) :
             c = px_2[i,j]
-            min = dist_eu2(c , pal[0])
+            min = color_distance_ciede2000(c , pal[0])
             l_min = 0
             for l in range (k) :
-                if dist_eu2(px_2[i,j] , pal[l]) < min :
-                    min = dist_eu2(c , pal[l])
+                if color_distance_ciede2000(px_2[i,j] , pal[l]) < min :
+                    min = color_distance_ciede2000(c , pal[l])
                     l_min = l
             px_2[i,j] = pal[l_min]
     return(im_2) 
 
+im_ciede2000 = recolorier_image_km_ciede2000(im,10)
+im_eucl = recolorier_image_km(im,10)
 
-#=========================================================================================================
-#=============================            Question 9           ===========================================
-#=========================================================================================================
+error_ciede2000 = compare_images(im, im_ciede2000)
+error_eucl = compare_images(im, im_eucl)
 
-#On utilise des tableaux numpy plutot que des listes pour optimiser la complexite spatiale etant donne qu'on
-#connait (pour la plupart des listes) le nombre final de donnees qu'il va y avoir. En plus de ca, les tableaux
-#sont plus appropries pour faire du calcul numerique.
+print(f"Erreur avec ciede2000: {error_ciede2000}")
+print(f"Erreur avec eucl: {error_eucl}")
 
 
-def Kmeans_opti(colors , k):
-    keys = list(colors.keys())
-    centroids = [keys[i] for i in random.sample(range(len(keys)), k)]
-    variation = True
-
-    while variation:
-        centroids2 = np.array([[] for _ in range(k)] , dtype = list) #On defini un tableau de k listes vides
-        cluster = np.array([[] for _ in range(k)] , dtype = list) #On defini un tableau de k listes vides
-        for key in keys : 
-            i_min = 0
-            for i in range (k) :
-                if color_distance_ciede2000(centroids[i_min],key) > color_distance_ciede2000(centroids[i],key):
-                    i_min = i           
-            cluster[i_min].append(key)
-        for i in range (k):
-            n_i = len(cluster[i])
-            S = np.zeros(1,3)
-            for j in range (n_i):
-                S[0] += cluster[i][j][0]
-                S[1] += cluster[i][j][1]
-                S[2] += cluster[i][j][2]
-            moy  = np.zeros(1,3)
-            moy = moy//n_i
-            centroids2[i] = [(moy[0] , moy[1] , moy[2])]
-        if set(centroids2) == set(centroids) :
-            variation = False
-        else :
-            centroids = centroids2
-    
-    return centroids
+im.show()
+im_ciede2000.show()
+im_eucl.show()
