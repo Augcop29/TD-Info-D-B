@@ -54,7 +54,7 @@ image_path = 'TD5/IMG_3135.png'
 colors, original_img = load_and_analyze_image(image_path)
 print("Couleurs uniques et leurs fréquences:", colors)
 
-k = 8  # Nombre de couleurs dans la nouvelle palette
+k = 20  # Nombre de couleurs dans la nouvelle palette
 new_palette = improved_palette(np.array(original_img), k)
 print("Nouvelle palette:", new_palette)
 
